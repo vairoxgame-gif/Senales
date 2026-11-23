@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Señales de Mercado</title>
+<meta name="description" content="Señales de tendencia en cripto y acciones al cierre de cada vela. Informativo, no ejecuta operaciones.">
+<meta name="theme-color" content="#0f1419">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Señales">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1>Señales</h1>
+    <button id="btn-refresh" class="icon-btn" aria-label="Actualizar">↻</button>
+    <button id="btn-settings" class="icon-btn" aria-label="Ajustes">⚙</button>
+  </div>
+  <p id="status" class="status" role="status">Cargando…</p>
+  <nav class="tabs" role="tablist" aria-label="Filtro">
+    <button role="tab" data-filter="todos" aria-selected="true">Todos</button>
+    <button role="tab" data-filter="cripto" aria-selected="false">Cripto</button>
+    <button role="tab" data-filter="accion" aria-selected="false">Acciones</button>
+    <button role="tab" data-filter="activas" aria-selected="false">Con señal</button>
+  </nav>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+<main id="list" class="list" aria-live="polite"></main>
+
+<footer class="foot">
+  Información, no asesoría financiera personalizada. La app no ejecuta operaciones.
+  La estrategia solo está validada en BTC y ETH (4h); en el resto es orientativa.
+</footer>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <section class="sheet-body" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <button class="sheet-close" data-close aria-label="Cerrar">✕</button>
+    <div id="sheet-content"></div>
+  </section>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
