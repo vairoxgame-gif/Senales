@@ -10,7 +10,7 @@ Uso:
   python3 scripts/update_signals.py --csv-dir DIR    # prueba offline (DIR/TICKER.csv)
   python3 scripts/update_signals.py --no-notify      # sin avisos push
 
-Solo librería estándar. Avisos push (opcional): variable NTFY_TOPIC (ntfy.sh).
+Solo librería estándar. Avisos push a la propia app (opcional): PUSH_SUBSCRIPTION y VAPID_PRIVATE_KEY.
 No ejecuta operaciones: solo informa.
 """
 import argparse
@@ -293,32 +293,38 @@ def read_csv(path):
 
 
 # ───────────────────────── avisos ─────────────────────────
-def notify(asset):
-    topic = os.environ.get("NTFY_TOPIC", "").strip()
-    if not topic:
-        return False
+TITULOS = {
+    "entrada_long": "Señal de COMPRA (long)",
+    "entrada_short": "Señal de VENTA (short): no comprar / salir si tienes",
+    "salida_long": "Salida del long (stop móvil)",
+    "salida_short": "Salida del short (stop móvil)",
+}
+SUBJECT = "https://vairoxgame-gif.github.io/Senales/"
+
+
+def build_message(asset):
     ev = asset["ultimo_evento"]
-    titulos = {
-        "entrada_long": "Señal de COMPRA (long)",
-        "entrada_short": "Señal de VENTA (short)",
-        "salida_long": "Salida del long (stop móvil)",
-        "salida_short": "Salida del short (stop móvil)",
-    }
     cuerpo = (
         f"{asset['ticker']} ({asset['marco']}) precio {asset['precio']:.6g}. "
         f"Stop móvil: {asset['stop_movil'] or 'n/a'}. "
         + ("Estrategia validada." if asset["validada"] else "Orientativa: no validada en este activo.")
-        + " Informativo, no asesoría. No ejecuta operaciones."
+        + " Informativo, no asesoría."
     )
-    req = urllib.request.Request(
-        f"https://ntfy.sh/{topic}",
-        data=cuerpo.encode("utf-8"),
-        headers={"Title": f"{asset['ticker']}: {titulos.get(ev['tipo'], ev['tipo'])}".encode("latin-1", "replace").decode("latin-1"),
-                 "Tags": "chart_with_upwards_trend"},
-        method="POST",
-    )
+    return {"title": f"{asset['ticker']}: {TITULOS.get(ev['tipo'], ev['tipo'])}", "body": cuerpo, "tag": asset["ticker"]}
+
+
+def notify(asset, sender=None):
+    """Aviso push a la propia app (Web Push). Requiere PUSH_SUBSCRIPTION y VAPID_PRIVATE_KEY."""
+    sub_raw = os.environ.get("PUSH_SUBSCRIPTION", "").strip()
+    priv = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+    if not sub_raw or not priv:
+        return False
     try:
-        urllib.request.urlopen(req, timeout=15).read()
+        sub = json.loads(sub_raw)
+        if sender is None:
+            import webpush  # noqa: PLC0415  (necesita `cryptography`)
+            sender = webpush.send
+        sender(sub, build_message(asset), priv, SUBJECT)
         return True
     except Exception as exc:  # noqa: BLE001
         print(f"  aviso falló para {asset['ticker']}: {exc}", file=sys.stderr)

@@ -176,18 +176,53 @@
     document.getElementById("sheet").hidden = false;
     document.querySelector(".sheet-close").focus();
   }
+  var VAPID_PUBLIC = "BHyoM5CzaKbAh1mDO6dQu75LpiFWyZwP1KjkEJ9EBxX94prltZw7L6IdOhqS4HLRM_7SxVwk7_j9Y_snz9IC2Ig";
+  function urlB64(t) {
+    var pad = "=".repeat((4 - t.length % 4) % 4);
+    var raw = atob((t + pad).replace(/-/g, "+").replace(/_/g, "/"));
+    var out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
   function openSettings() {
     var c = document.getElementById("sheet-content");
     c.textContent = "";
     c.appendChild(el("h2", { id: "sheet-title", text: "Ajustes" }));
-    c.appendChild(el("h3", { text: "Avisos en la app" }));
+    c.appendChild(el("h3", { text: "Avisos de compra y venta" }));
     var msg = el("p", { class: "note", text: "" });
-    var supported = "Notification" in window;
-    function upd() { msg.textContent = !supported ? "Este navegador no admite notificaciones." : "Permiso actual: " + ({ granted: "activado", denied: "bloqueado", "default": "sin pedir" }[Notification.permission]); }
+    var box = el("textarea", { id: "codigo", readonly: "readonly", rows: "4", style: "width:100%;font:12px monospace;margin-top:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px", hidden: "hidden" });
+    var okPush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    function upd(extra) {
+      if (!okPush) { msg.textContent = "Este navegador no admite avisos push. En iPhone, instala la app desde Safari (Añadir a pantalla de inicio, iOS 16.4 o superior) y ábrela desde el ícono."; return; }
+      msg.textContent = "Permiso: " + ({ granted: "activado", denied: "bloqueado en el sistema", "default": "sin pedir" }[Notification.permission]) + (extra ? ". " + extra : "");
+    }
+    function activar() {
+      if (!okPush) return;
+      Notification.requestPermission().then(function (p) {
+        if (p !== "granted") { upd(); return; }
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.getSubscription().then(function (s) {
+            return s || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(VAPID_PUBLIC) });
+          });
+        }).then(function (sub) {
+          box.value = JSON.stringify(sub.toJSON());
+          box.hidden = false;
+          upd("Dispositivo registrado. Copia el código y guárdalo en GitHub (paso siguiente).");
+        });
+      }).catch(function (e) { upd("No se pudo activar: " + (e && e.message ? e.message : e)); });
+    }
     upd();
-    c.appendChild(el("div", { class: "row" }, [el("button", { class: "btn primary", type: "button", text: "Activar avisos", onclick: function () { if (supported) Notification.requestPermission().then(upd); } })]));
+    c.appendChild(el("div", { class: "row" }, [
+      el("button", { class: "btn primary", type: "button", text: "Activar avisos en este dispositivo", onclick: activar }),
+      el("button", { class: "btn", type: "button", text: "Copiar código", onclick: function () {
+        if (!box.value) { upd("Primero activa los avisos."); return; }
+        box.select();
+        if (navigator.clipboard) navigator.clipboard.writeText(box.value).then(function () { upd("Código copiado."); }, function () { upd("Mantén pulsado el código para copiarlo."); });
+      } })
+    ]));
     c.appendChild(msg);
-    c.appendChild(el("p", { class: "note", text: "Estos avisos solo salen cuando la app está abierta o en segundo plano reciente. Para avisos con la app cerrada, configura ntfy (ver README)." }));
+    c.appendChild(box);
+    c.appendChild(el("p", { class: "note", text: "Los avisos llegan por el sistema de notificaciones de tu propio navegador, sin apps de terceros. Solo avisan cuando aparece una señal nueva en el cierre de una vela." }));
     c.appendChild(el("h3", { text: "Tema" }));
     var th = el("select", { id: "tema" }, [el("option", { value: "auto", text: "Automático" }), el("option", { value: "light", text: "Claro" }), el("option", { value: "dark", text: "Oscuro" })]);
     th.value = store("tema") || "auto";

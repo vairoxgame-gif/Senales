@@ -27,11 +27,16 @@ NVDA, AAPL, MSFT, TSLA, SPY, QQQ. Cambia la lista en `ASSETS` dentro del script.
 5. Abre la URL de Pages en el teléfono: Android/Chrome → menú → "Instalar app"; iPhone/Safari →
    Compartir → "Añadir a pantalla de inicio".
 
-## Avisos con la app cerrada (ntfy, opcional)
-1. Instala la app **ntfy** y suscríbete a un tema con un nombre largo y aleatorio (el tema es público
-   para quien lo conozca; el mensaje solo contiene ticker, precio y tipo de señal).
-2. En el repo: Settings → Secrets and variables → Actions → `NTFY_TOPIC` = ese nombre.
-3. El script envía un aviso solo cuando aparece un evento nuevo (entrada o salida) en la última vela cerrada.
+## Avisos dentro de la propia app (Web Push)
+Sin apps de terceros: el aviso viaja por el servicio push de tu navegador (Chrome/Safari).
+1. Abre la app instalada → ⚙ Ajustes → **Activar avisos en este dispositivo** → acepta el permiso.
+2. Toca **Copiar código** (es un JSON con la dirección de tu navegador).
+3. En el repo: Settings → Secrets and variables → Actions → New repository secret:
+   - `PUSH_SUBSCRIPTION` = el código copiado.
+   - `VAPID_PRIVATE_KEY` = la clave privada que te entregó Claude (par de la pública incluida en `app.js`).
+4. Ejecuta el workflow una vez. Desde ahí, cada señal nueva en una vela cerrada dispara un aviso.
+iPhone: requiere iOS 16.4 o superior y abrir la app desde el ícono de inicio.
+Si cambias de teléfono o reinstalas la app, repite los pasos 1–3 (la suscripción cambia).
 
 ## Límites conocidos
 - Las entradas se simulan al cierre de la vela; en TradingView se ejecutan en la apertura siguiente.
