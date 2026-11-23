@@ -1,0 +1,32 @@
+name: Actualizar señales
+
+on:
+  schedule:
+    # 7 minutos después de cada cierre de vela de 4h (UTC)
+    - cron: "7 0,4,8,12,16,20 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pruebas
+        run: python3 -I -m unittest discover -s tests
+      - name: Calcular señales
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python3 scripts/update_signals.py
+      - name: Guardar datos
+        run: |
+          git config user.name "senales-bot"
+          git config user.email "senales-bot@users.noreply.github.com"
+          git add data/signals.json
+          git diff --cached --quiet || git commit -m "Actualizar señales"
+          git push
