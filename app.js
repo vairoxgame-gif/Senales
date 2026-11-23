@@ -5,7 +5,7 @@
   var DEMO = new URLSearchParams(location.search).has("demo");
   if (DEMO) DATA_URL = "data/demo.json";
 
-  var state = { data: null, filter: "todos", settings: loadSettings() };
+  var state = { data: null, filter: "todos", settings: loadSettings(), live: {}, liveAt: 0, liveFail: false };
 
   // ───── utilidades ─────
   function store(key, val) {
@@ -67,6 +67,42 @@
     return svg;
   }
 
+  // ───── precio en vivo (solo cripto, desde el navegador; la señal sigue decidiéndose al cierre de vela) ─────
+  var LIVE_HOSTS = ["https://data-api.binance.vision", "https://api.binance.com"];
+  var LIVE_MAX_AGE = 3 * 60 * 1000;
+  function liveFor(a) {
+    var l = state.live[a.ticker];
+    return (a.tipo === "cripto" && l && Date.now() - state.liveAt < LIVE_MAX_AGE) ? l : null;
+  }
+  function liveStatus() {
+    var n = document.getElementById("live");
+    if (!n || DEMO) return;
+    if (state.liveAt && Date.now() - state.liveAt < LIVE_MAX_AGE) { n.textContent = "Cripto en vivo (cada 15 s) · Acciones: último cierre diario"; n.className = "status"; }
+    else if (state.liveFail) { n.textContent = "Precio en vivo no disponible: se muestra el último cierre de vela."; n.className = "status stale"; }
+  }
+  function fetchLive() {
+    if (DEMO || document.hidden || !state.data) return;
+    var syms = state.data.activos.filter(function (a) { return a.tipo === "cripto"; }).map(function (a) { return a.ticker + "USDT"; });
+    if (!syms.length) return;
+    var q = "/api/v3/ticker/24hr?symbols=" + encodeURIComponent(JSON.stringify(syms));
+    (function tryHost(i) {
+      if (i >= LIVE_HOSTS.length) { state.liveFail = true; liveStatus(); return; }
+      fetch(LIVE_HOSTS[i] + q, { cache: "no-store" }).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }).then(function (rows) {
+        var got = 0;
+        rows.forEach(function (r) {
+          var t = r.symbol.replace(/USDT$/, ""), p = parseFloat(r.lastPrice), ch = parseFloat(r.priceChangePercent);
+          if (isFinite(p) && p > 0) { state.live[t] = { p: p, ch: isFinite(ch) ? ch : 0 }; got++; }
+        });
+        if (!got) throw new Error("sin datos");
+        state.liveAt = Date.now(); state.liveFail = false;
+        liveStatus(); renderList();
+      }).catch(function () { tryHost(i + 1); });
+    })(0);
+  }
+
   // ───── lista ─────
   function visible(a) {
     if (state.filter === "cripto") return a.tipo === "cripto";
@@ -84,18 +120,21 @@
       return;
     }
     items.forEach(function (a) {
-      var dir = a.cambio_pct >= 0 ? "up" : "down";
+      var lv = liveFor(a);
+      var px = lv ? lv.p : a.precio, chg = lv ? lv.ch : a.cambio_pct;
+      var dir = chg >= 0 ? "up" : "down";
       var card = el("button", { class: "card", type: "button", "aria-label": a.ticker + ": " + (ESTADOS[a.estado] || [a.estado])[0] }, [
         el("div", {}, [el("span", { class: "tk", text: a.ticker }), el("span", { class: "nm", text: a.nombre })]),
-        el("div", { class: "px", text: "$" + fmt(a.precio) }),
+        el("div", { class: "px", text: "$" + fmt(px) }),
         el("div", { class: "meta" }, [
           pill(a.estado),
           el("span", { class: "tag", text: "Tendencia " + a.sesgo }),
           el("span", { class: "tag", text: a.marco }),
+          lv ? el("span", { class: "tag live", text: "● en vivo" }) : null,
           a.validada ? null : el("span", { class: "tag", text: "orientativa" }),
           a.obsoleto ? el("span", { class: "tag stale", text: "dato viejo" }) : null
         ]),
-        el("div", {}, [el("div", { class: "ch " + dir, text: (a.cambio_pct >= 0 ? "▲ +" : "▼ ") + fmt(a.cambio_pct, 2) + "%" }), spark(a.serie, dir)])
+        el("div", {}, [el("div", { class: "ch " + dir, text: (chg >= 0 ? "▲ +" : "▼ ") + fmt(chg, 2) + "%" }), spark(a.serie, dir)])
       ]);
       card.addEventListener("click", function () { openSheet(a); });
       list.appendChild(card);
@@ -125,6 +164,8 @@
     var i = a.indicadores;
     c.appendChild(el("h2", { id: "sheet-title", text: a.ticker + " · " + a.nombre }));
     c.appendChild(el("p", { class: "note", text: "Vela " + a.marco + " cerrada: " + fechaVela(a.vela_cierre_t) + " · precio $" + fmt(a.precio) }));
+    var lvd = liveFor(a);
+    if (lvd) c.appendChild(el("p", { class: "note", text: "Precio en vivo: $" + fmt(lvd.p) + " (informativo: la señal se decide al cierre de la vela, no con este precio)." }));
     c.appendChild(el("div", { class: "row" }, [pill(a.estado), el("span", { class: "tag", text: "Tendencia " + a.sesgo })]));
     if (!a.validada) c.appendChild(el("div", { class: "warnbox", text: "La estrategia no está validada en este activo. Úsalo como referencia, no como señal probada." }));
     if (a.obsoleto) c.appendChild(el("div", { class: "warnbox", text: "No se pudo actualizar este activo; se muestran los últimos datos guardados." }));
@@ -281,6 +322,7 @@
       st.className = "status" + (old || DEMO ? " stale" : "");
       if (!DEMO) checkNew(d);
       renderList();
+      fetchLive();
     }).catch(function () {
       st.textContent = "Sin conexión o sin datos. Mostrando lo último guardado si existe.";
       st.className = "status stale";
@@ -304,6 +346,8 @@
     document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
     load();
     setInterval(load, 5 * 60 * 1000);
+    setInterval(fetchLive, 15 * 1000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) fetchLive(); });
     if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(function () {});
   });
 })();
