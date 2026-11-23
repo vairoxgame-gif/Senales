@@ -170,6 +170,9 @@
     if (!a.validada) c.appendChild(el("div", { class: "warnbox", text: "La estrategia no está validada en este activo. Úsalo como referencia, no como señal probada." }));
     if (a.obsoleto) c.appendChild(el("div", { class: "warnbox", text: "No se pudo actualizar este activo; se muestran los últimos datos guardados." }));
 
+    if (a.ultimo_evento) {
+      c.appendChild(el("div", { class: "row" }, [el("button", { class: "btn primary", type: "button", text: "Guía paso a paso de la última señal", onclick: function () { openGuide(a); } })]));
+    }
     c.appendChild(el("h3", { text: "Estado de la estrategia" }));
     var rows = [["Posición simulada", a.posicion]];
     if (a.posicion !== "fuera") { rows.push(["Entrada", "$" + fmt(a.entrada)]); rows.push(["Stop móvil (4×ATR)", "$" + fmt(a.stop_movil)]); }
@@ -216,6 +219,37 @@
     c.appendChild(el("p", { class: "note", text: "Información, no asesoría financiera personalizada. Las órdenes las colocas tú." }));
     document.getElementById("sheet").hidden = false;
     document.querySelector(".sheet-close").focus();
+  }
+  function openGuide(a) {
+    var g = Guia.buildGuide(a, { capital: state.settings.capital, riesgo: state.settings.riesgo, fmt: fmt, livePrice: (liveFor(a) || {}).p });
+    var c = document.getElementById("sheet-content");
+    c.textContent = "";
+    if (!g) { openSheet(a); return; }
+    c.appendChild(el("h2", { id: "sheet-title", text: g.titulo }));
+    c.appendChild(el("p", { class: "note", text: "Señal: " + fechaVela(a.ultimo_evento.t) + " · calculado con tu capital de $" + fmt(state.settings.capital, 0) + " y " + fmt(state.settings.riesgo, 1) + "% de riesgo (cámbialos en el detalle del activo)." }));
+    c.appendChild(el("h3", { text: "Resumen" }));
+    c.appendChild(kv(g.resumen));
+    g.avisos.forEach(function (t) { c.appendChild(el("div", { class: "warnbox", text: t })); });
+    c.appendChild(el("h3", { text: "Pasos" }));
+    g.pasos.forEach(function (p, i) {
+      var cb = el("input", { type: "checkbox" });
+      var box = el("div", { class: "step" }, [
+        el("label", {}, [cb, el("span", { text: "Paso " + (i + 1) + " · " + p.t })]),
+        el("ul", {}, p.items.map(function (t) { return el("li", { text: t }); }))
+      ]);
+      cb.addEventListener("change", function () { box.className = "step" + (cb.checked ? " done" : ""); });
+      c.appendChild(box);
+    });
+    c.appendChild(el("div", { class: "row" }, [el("button", { class: "btn", type: "button", text: "Ver detalle del activo", onclick: function () { openSheet(a); } })]));
+    c.appendChild(el("p", { class: "note", text: "Información, no asesoría financiera personalizada. Las órdenes las colocas tú." }));
+    document.getElementById("sheet").hidden = false;
+    document.querySelector(".sheet-close").focus();
+  }
+  var pendingOp = null;
+  function openOp(ticker) {
+    if (!state.data) { pendingOp = ticker; return; }
+    var a = state.data.activos.filter(function (x) { return x.ticker === ticker; })[0];
+    if (a) { if (a.ultimo_evento) openGuide(a); else openSheet(a); }
   }
   var VAPID_PUBLIC = "BHyoM5CzaKbAh1mDO6dQu75LpiFWyZwP1KjkEJ9EBxX94prltZw7L6IdOhqS4HLRM_7SxVwk7_j9Y_snz9IC2Ig";
   function urlB64(t) {
@@ -304,7 +338,7 @@
     b.textContent = "Nuevas señales: " + fresh.map(function (a) { return a.ticker + " (" + (ESTADOS[a.estado] || [a.estado])[0] + ")"; }).join(", ");
     if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
       navigator.serviceWorker.ready.then(function (reg) {
-        fresh.forEach(function (a) { reg.showNotification(a.ticker + ": " + (ESTADOS[a.estado] || [a.estado])[0], { body: "Precio $" + fmt(a.precio) + " · " + a.marco + ". Informativo, no asesoría.", tag: a.ticker }); });
+        fresh.forEach(function (a) { reg.showNotification(a.ticker + ": " + (ESTADOS[a.estado] || [a.estado])[0], { body: "Precio $" + fmt(a.precio) + " · " + a.marco + ". Informativo, no asesoría.", tag: a.ticker, data: { ticker: a.ticker } }); });
       });
     }
   }
@@ -323,6 +357,7 @@
       if (!DEMO) checkNew(d);
       renderList();
       fetchLive();
+      if (pendingOp) { var t = pendingOp; pendingOp = null; openOp(t); }
     }).catch(function () {
       st.textContent = "Sin conexión o sin datos. Mostrando lo último guardado si existe.";
       st.className = "status stale";
@@ -344,6 +379,9 @@
     document.querySelectorAll("[data-close]").forEach(function (n) { n.addEventListener("click", closeSheet); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
     document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
+    var op = new URLSearchParams(location.search).get("op");
+    if (op) { pendingOp = op.toUpperCase(); try { history.replaceState(null, "", location.pathname); } catch (e) {} }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function (e) { if (e.data && e.data.op) { load(); openOp(String(e.data.op).toUpperCase()); } });
     load();
     setInterval(load, 5 * 60 * 1000);
     setInterval(fetchLive, 15 * 1000);

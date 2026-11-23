@@ -1,6 +1,6 @@
 // Service worker: la app abre sin conexión; los datos siempre intentan la red primero.
-var CACHE = "senales-v2";
-var SHELL = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png"];
+var CACHE = "senales-v3";
+var SHELL = ["./", "index.html", "styles.css", "app.js", "guide.js", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
@@ -32,15 +32,21 @@ self.addEventListener("fetch", function (e) {
 });
 self.addEventListener("notificationclick", function (e) {
   e.notification.close();
-  e.waitUntil(self.clients.matchAll({ type: "window" }).then(function (list) {
-    if (list.length) return list[0].focus();
-    return self.clients.openWindow("./");
+  var t = e.notification.data && e.notification.data.ticker;
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    if (list.length) {
+      var w = list[0];
+      if (t) w.postMessage({ op: t });
+      return w.focus();
+    }
+    return self.clients.openWindow(t ? "./?op=" + encodeURIComponent(t) : "./");
   }));
 });
 self.addEventListener("push", function (e) {
   var d = { title: "Señales", body: "Hay una señal nueva. Ábrela para ver el detalle." };
   try { if (e.data) d = Object.assign(d, e.data.json()); } catch (err) {}
   e.waitUntil(self.registration.showNotification(d.title, {
-    body: d.body, tag: d.tag || "senal", icon: "icons/icon-192.png", badge: "icons/icon-192.png", renotify: true
+    body: d.body, tag: d.tag || "senal", icon: "icons/icon-192.png", badge: "icons/icon-192.png", renotify: true,
+    data: { ticker: d.ticker || null }
   }));
 });

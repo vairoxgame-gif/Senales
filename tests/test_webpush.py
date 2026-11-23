@@ -90,8 +90,8 @@ class WebPush(unittest.TestCase):
 
 
 class Notify(unittest.TestCase):
-    ASSET = {"ticker": "BTC", "marco": "4h", "precio": 100.5, "stop_movil": 90.0, "validada": True,
-             "ultimo_evento": {"tipo": "entrada_long", "t": 1}}
+    ASSET = {"ticker": "BTC", "tipo": "cripto", "marco": "4h", "precio": 100.0, "entrada": 100.0, "stop_movil": 90.0,
+             "validada": True, "indicadores": {"atr14": 2.5}, "ultimo_evento": {"tipo": "entrada_long", "t": 1}}
 
     def test_no_config_does_nothing(self):
         with mock.patch.dict(os.environ, {"PUSH_SUBSCRIPTION": "", "VAPID_PRIVATE_KEY": ""}):
@@ -103,8 +103,37 @@ class Notify(unittest.TestCase):
         with mock.patch.dict(os.environ, env):
             ok = u.notify(self.ASSET, sender=lambda sub, msg, priv, subj: got.update(msg=msg, priv=priv))
         self.assertTrue(ok)
-        self.assertIn("COMPRA", got["msg"]["title"])
+        self.assertIn("LONG", got["msg"]["title"])
         self.assertIn("Informativo", got["msg"]["body"])
+
+    def test_message_levels_long_and_short(self):
+        m = u.build_message(self.ASSET)  # entrada 100, stop 90 -> r=10
+        self.assertIn("STOP-LOSS $90,00", m["body"])
+        self.assertIn("$120,00 (2R)", m["body"])
+        self.assertIn("$130,00 (3R)", m["body"])
+        self.assertIn("1,0%", m["body"].split("Trailing")[0] + "1,0%")  # formato es-AR presente
+        self.assertIn("Trailing stop de Binance: ~10,0%", m["body"])
+        self.assertIn("1 BTC ($100,00)", m["body"])  # 10 USDT de riesgo / r=10 -> 1 unidad
+        sh = dict(self.ASSET, stop_movil=110.0, ultimo_evento={"tipo": "entrada_short", "t": 1})
+        ms = u.build_message(sh)
+        self.assertIn("SHORT", ms["title"])
+        self.assertIn("STOP-LOSS $110,00", ms["body"])
+        self.assertIn("$80,00 (2R)", ms["body"])
+        self.assertIn("Lemon", ms["body"])
+
+    def test_message_stock_has_no_binance_trailing(self):
+        a = dict(self.ASSET, ticker="NVDA", tipo="accion", marco="1d", validada=False)
+        m = u.build_message(a)
+        self.assertNotIn("Binance", m["body"])
+        self.assertIn("NO validada", m["body"])
+
+    def test_payload_carries_ticker_for_deep_link(self):
+        self.assertEqual(u.build_message(self.ASSET)["ticker"], "BTC")
+        self.assertEqual(u.build_message(dict(self.ASSET, ultimo_evento={"tipo": "salida_long", "t": 2}))["ticker"], "BTC")
+
+    def test_exit_message(self):
+        m = u.build_message(dict(self.ASSET, ultimo_evento={"tipo": "salida_long", "t": 2}))
+        self.assertIn("CERRAR LONG", m["title"])
 
     def test_sender_error_is_swallowed(self):
         def boom(*a): raise RuntimeError("410")

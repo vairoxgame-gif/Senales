@@ -293,24 +293,60 @@ def read_csv(path):
 
 
 # ───────────────────────── avisos ─────────────────────────
-TITULOS = {
-    "entrada_long": "Señal de COMPRA (long)",
-    "entrada_short": "Señal de VENTA (short): no comprar / salir si tienes",
-    "salida_long": "Salida del long (stop móvil)",
-    "salida_short": "Salida del short (stop móvil)",
-}
 SUBJECT = "https://vairoxgame-gif.github.io/Senales/"
+RIESGO_PCT = 1.0     # riesgo por operación usado en el ejemplo de tamaño
+CAPITAL_REF = 1000   # capital de referencia (USDT) para el ejemplo de tamaño
+
+
+def es(x, dec=2):
+    """Formato es-AR: 1.234,56"""
+    return f"{x:,.{dec}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def px(x):
+    return es(x, 2 if abs(x) >= 1 else 4)
 
 
 def build_message(asset):
     ev = asset["ultimo_evento"]
-    cuerpo = (
-        f"{asset['ticker']} ({asset['marco']}) precio {asset['precio']:.6g}. "
-        f"Stop móvil: {asset['stop_movil'] or 'n/a'}. "
-        + ("Estrategia validada." if asset["validada"] else "Orientativa: no validada en este activo.")
-        + " Informativo, no asesoría."
-    )
-    return {"title": f"{asset['ticker']}: {TITULOS.get(ev['tipo'], ev['tipo'])}", "body": cuerpo, "tag": asset["ticker"]}
+    tk, tipo = asset["ticker"], ev["tipo"]
+    cripto = asset.get("tipo") == "cripto"
+    par = f"{tk}/USDT" if cripto else tk
+    val = "estrategia validada" if asset["validada"] else "orientativa, NO validada en este activo"
+    pie = "Informativo, no asesoría. Las órdenes las colocas tú."
+
+    if tipo in ("salida_long", "salida_short"):
+        lado = "LONG" if tipo == "salida_long" else "SHORT"
+        accion = "vende" if lado == "LONG" else "cierra el short (compra)"
+        return {"title": f"{tk}: CERRAR {lado}",
+                "body": f"{par} ({asset['marco']}): se tocó el stop móvil. Si tienes la operación, {accion}. Precio ~${px(asset['precio'])}.\n{pie}",
+                "tag": tk, "ticker": tk}
+
+    largo = tipo == "entrada_long"
+    entrada = float(asset.get("entrada") or asset["precio"])
+    stop = float(asset["stop_movil"])
+    r = abs(entrada - stop)
+    sgn = 1 if largo else -1
+    t2, t3 = entrada + sgn * 2 * r, entrada + sgn * 3 * r
+    dist = r / entrada * 100
+    unidades = CAPITAL_REF * RIESGO_PCT / 100 / r if r else 0
+    lineas = [
+        f"{par} · {asset['marco']} · {val}",
+        ("COMPRAR (long)" if largo else "VENDER / abrir SHORT (futuros)") + f" ~${px(entrada)}",
+        f"STOP-LOSS ${px(stop)} ({'−' if largo else '+'}{es(dist, 1)}%): " + ("vender si baja a ese precio" if largo else "recomprar si sube a ese precio"),
+        f"Objetivo ref.: ${px(t2)} (2R) / ${px(t3)} (3R) · riesgo/beneficio 1:2 a 1:3",
+        f"Tamaño: con {es(CAPITAL_REF, 0)} {'USDT' if cripto else 'USD'} y {es(RIESGO_PCT, 0)}% de riesgo → "
+        f"{es(unidades, 6 if cripto else 2).rstrip('0').rstrip(',')} {tk if cripto else 'acciones'} (${es(unidades * entrada)})",
+    ]
+    atr = (asset.get("indicadores") or {}).get("atr14")
+    if atr and cripto:
+        lineas.append(f"Trailing stop de Binance: ~{es(4 * atr / entrada * 100, 1)}% (4×ATR)")
+    if not largo:
+        lineas.append("En Lemon (contado) no se puede operar short: úsalo como 'no comprar'.")
+    lineas.append("Sale con el stop móvil; los objetivos son solo referencia.")
+    lineas.append("Toca para ver la guía paso a paso.")
+    lineas.append(pie)
+    return {"title": f"{tk}: " + ("LONG — comprar" if largo else "SHORT — vender"), "body": "\n".join(lineas), "tag": tk, "ticker": tk}
 
 
 def notify(asset, sender=None):
