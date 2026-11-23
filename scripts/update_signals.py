@@ -331,13 +331,41 @@ def notify(asset, sender=None):
         return False
 
 
+def send_test(sender=None):
+    """Aviso de prueba por el mismo camino que las señales reales. Devuelve 0 si se envió."""
+    sub_raw = os.environ.get("PUSH_SUBSCRIPTION", "").strip()
+    priv = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+    if not priv:
+        print("Falta el secreto VAPID_PRIVATE_KEY.", file=sys.stderr)
+        return 1
+    if not sub_raw:
+        print("Falta el secreto PUSH_SUBSCRIPTION (actívalo en la app y pega el código).", file=sys.stderr)
+        return 1
+    try:
+        sub = json.loads(sub_raw)
+        if sender is None:
+            import webpush  # noqa: PLC0415
+            sender = webpush.send
+        code = sender(sub, {"title": "Prueba de avisos", "body": "Si ves esto, los avisos funcionan. Informativo, no asesoría.", "tag": "prueba"}, priv, SUBJECT)
+        print(f"Aviso de prueba enviado (HTTP {code}).")
+        return 0
+    except Exception as exc:  # noqa: BLE001
+        detail = getattr(exc, "code", "")
+        hint = " La suscripción caducó o es inválida: repite Activar avisos y actualiza PUSH_SUBSCRIPTION." if detail in (404, 410) else ""
+        print(f"Falló el aviso de prueba: {exc}.{hint}", file=sys.stderr)
+        return 1
+
+
 # ───────────────────────── principal ─────────────────────────
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv-dir")
     ap.add_argument("--no-notify", action="store_true")
+    ap.add_argument("--test-push", action="store_true", help="solo envía un aviso de prueba")
     ap.add_argument("--out", default=str(OUT))
     args = ap.parse_args()
+    if args.test_push:
+        return send_test()
 
     out_path = Path(args.out)
     previous = {}

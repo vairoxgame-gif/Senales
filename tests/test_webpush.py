@@ -112,6 +112,13 @@ class Notify(unittest.TestCase):
         with mock.patch.dict(os.environ, env):
             self.assertFalse(u.notify(self.ASSET, sender=boom))
 
+    def test_send_test_ok_and_missing_secrets(self):
+        env = {"PUSH_SUBSCRIPTION": json.dumps({"endpoint": "e", "keys": {}}), "VAPID_PRIVATE_KEY": "k"}
+        with mock.patch.dict(os.environ, env):
+            self.assertEqual(u.send_test(sender=lambda *a: 201), 0)
+        with mock.patch.dict(os.environ, {"PUSH_SUBSCRIPTION": "", "VAPID_PRIVATE_KEY": "k"}):
+            self.assertEqual(u.send_test(sender=lambda *a: 201), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

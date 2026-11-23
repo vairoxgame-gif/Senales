@@ -220,6 +220,14 @@
         if (navigator.clipboard) navigator.clipboard.writeText(box.value).then(function () { upd("Código copiado."); }, function () { upd("Mantén pulsado el código para copiarlo."); });
       } })
     ]));
+    c.appendChild(el("div", { class: "row" }, [
+      el("button", { class: "btn", type: "button", text: "Probar aviso en este dispositivo", onclick: function () {
+        if (!okPush || Notification.permission !== "granted") { upd("Primero activa los avisos y acepta el permiso."); return; }
+        navigator.serviceWorker.ready.then(function (reg) {
+          return reg.showNotification("Prueba de avisos", { body: "Si ves esto, el teléfono puede mostrar avisos de la app.", tag: "prueba", icon: "icons/icon-192.png" });
+        }).then(function () { upd("Aviso local enviado. Si no lo ves, revisa las notificaciones del sistema para esta app."); }, function (e) { upd("Error: " + e.message); });
+      } })
+    ]));
     c.appendChild(msg);
     c.appendChild(box);
     c.appendChild(el("p", { class: "note", text: "Los avisos llegan por el sistema de notificaciones de tu propio navegador, sin apps de terceros. Solo avisan cuando aparece una señal nueva en el cierre de una vela." }));
