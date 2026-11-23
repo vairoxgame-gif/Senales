@@ -1,0 +1,397 @@
+[
+ {
+  "name": "stop tocado",
+  "asset": {
+   "precio": 89,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "VENDER"
+ },
+ {
+  "name": "stop exacto",
+  "asset": {
+   "precio": 90,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "VENDER"
+ },
+ {
+  "name": "objetivo 2",
+  "asset": {
+   "precio": 135,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "VENDER"
+ },
+ {
+  "name": "objetivo 1",
+  "asset": {
+   "precio": 122,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "TOMAR GANANCIA"
+ },
+ {
+  "name": "objetivo 1 exacto",
+  "asset": {
+   "precio": 120,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "TOMAR GANANCIA"
+ },
+ {
+  "name": "cerca del stop",
+  "asset": {
+   "precio": 98,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 92
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "CERCA DEL STOP"
+ },
+ {
+  "name": "stop en break-even cerca",
+  "asset": {
+   "precio": 108,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 100
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "CERCA DEL STOP"
+ },
+ {
+  "name": "subir stop",
+  "asset": {
+   "precio": 110,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "SUBIR STOP"
+ },
+ {
+  "name": "perdió EMA50",
+  "asset": {
+   "precio": 99,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 105,
+   "stop": 80
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "REVISAR"
+ },
+ {
+  "name": "añadir",
+  "asset": {
+   "precio": 101,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 0.5,
+   "compra": 100,
+   "stop": 85
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "AÑADIR"
+ },
+ {
+  "name": "no añadir: riesgo agotado",
+  "asset": {
+   "precio": 101,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 85
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "MANTENER"
+ },
+ {
+  "name": "no añadir: sin capital",
+  "asset": {
+   "precio": 101,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 0.5,
+   "compra": 100,
+   "stop": 85
+  },
+  "cfg": null,
+  "expected": "MANTENER"
+ },
+ {
+  "name": "no añadir: RSI alto",
+  "asset": {
+   "precio": 101,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 70,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 0.5,
+   "compra": 100,
+   "stop": 85
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "MANTENER"
+ },
+ {
+  "name": "no añadir: bajo EMA200",
+  "asset": {
+   "precio": 101,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 120,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 0.5,
+   "compra": 100,
+   "stop": 85
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "MANTENER"
+ },
+ {
+  "name": "sin stop usa 2xATR",
+  "asset": {
+   "precio": 105,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 70,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "MANTENER"
+ },
+ {
+  "name": "sin stop y cae bajo 2xATR",
+  "asset": {
+   "precio": 79,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "VENDER"
+ },
+ {
+  "name": "objetivos propios aún no alcanzados (ganancia >1R: sube stop)",
+  "asset": {
+   "precio": 150,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90,
+   "obj1": 160,
+   "obj2": 200
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "SUBIR STOP"
+ },
+ {
+  "name": "objetivos propios: alcanza el 1",
+  "asset": {
+   "precio": 161,
+   "indicadores": {
+    "ema50": 100,
+    "ema200": 80,
+    "rsi14": 50,
+    "atr14": 10
+   }
+  },
+  "pos": {
+   "cantidad": 1,
+   "compra": 100,
+   "stop": 90,
+   "obj1": 160,
+   "obj2": 200
+  },
+  "cfg": {
+   "capital": 1000,
+   "riesgo": 1
+  },
+  "expected": "TOMAR GANANCIA"
+ }
+]

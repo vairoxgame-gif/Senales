@@ -38,6 +38,14 @@ Sin apps de terceros: el aviso viaja por el servicio push de tu navegador (Chrom
 iPhone: requiere iOS 16.4 o superior y abrir la app desde el ícono de inicio.
 Si cambias de teléfono o reinstalas la app, repite los pasos 1–3 (la suscripción cambia).
 
+## Mis posiciones (mantener / vender / tomar ganancia / añadir)
+1. En la app, pestaña **Mis posiciones** → **Agregar posición**: activo, cantidad, precio de compra en USD y stop.
+2. La app evalúa cada posición con el último cierre (en cripto, con el precio en vivo) y recomienda:
+   VENDER, TOMAR GANANCIA, CERCA DEL STOP, SUBIR STOP, REVISAR, AÑADIR o MANTENER.
+3. Las posiciones se guardan solo en tu teléfono. Para avisos con la app cerrada: **Avisos con la app cerrada** →
+   Copiar → secreto privado `POSICIONES` en GitHub. El servidor avisa cuando la recomendación cambia.
+4. Límites: solo compras (long); acciones evaluadas con el cierre diario, sin vigilar el stop durante el día.
+
 ## Límites conocidos
 - Las entradas se simulan al cierre de la vela; en TradingView se ejecutan en la apertura siguiente.
 - Las velas de 4h de Binance pueden diferir de las agregadas de TradingView con las que se hizo el backtest.

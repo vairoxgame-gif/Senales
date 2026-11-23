@@ -114,6 +114,7 @@
     var list = document.getElementById("list");
     list.textContent = "";
     if (!state.data) return;
+    if (state.filter === "posiciones") { renderPositions(list); return; }
     var items = state.data.activos.filter(visible);
     if (!items.length) {
       list.appendChild(el("p", { class: "empty", text: state.data.activos.length ? "Ningún activo con ese filtro ahora." : "Todavía no hay datos. Ejecuta el actualizador (ver README)." }));
@@ -220,6 +221,160 @@
     document.getElementById("sheet").hidden = false;
     document.querySelector(".sheet-close").focus();
   }
+  // ───── mis posiciones (solo en este teléfono; nunca se suben al repositorio) ─────
+  function loadPos() {
+    try { var l = JSON.parse(store("posiciones") || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; }
+  }
+  function savePos(list) { store("posiciones", JSON.stringify(list)); }
+  function assetOf(tk) { return state.data ? state.data.activos.filter(function (x) { return x.ticker === tk; })[0] : null; }
+  function evalPos(pos) {
+    var a = assetOf(pos.ticker);
+    if (!a) return null;
+    var lv = liveFor(a);
+    var copy = {}; Object.keys(a).forEach(function (k) { copy[k] = a[k]; });
+    if (lv) copy.precio = lv.p;
+    return { a: a, live: !!lv, price: copy.precio, ev: Posiciones.evaluar(copy, pos, state.settings) };
+  }
+  var ACCION_CLASE = { "VENDER": "sell", "TOMAR GANANCIA": "buy", "AÑADIR": "buy", "SUBIR STOP": "hold", "CERCA DEL STOP": "hold", "REVISAR": "hold", "MANTENER": "" };
+  function accionPill(txt) { return el("span", { class: "pill " + (ACCION_CLASE[txt] || ""), text: txt }); }
+  function qtyTxt(n) { return fmt(n, n < 1 ? 6 : 4).replace(/,?0+$/, ""); }
+  function money(n) { return (n >= 0 ? "+$" : "−$") + fmt(Math.abs(n), 2); }
+  function signed(n, d) { return (n >= 0 ? "+" : "−") + fmt(Math.abs(n), d === undefined ? 1 : d); }
+
+  function renderPositions(list) {
+    var pos = loadPos();
+    var top = [el("button", { class: "btn primary", type: "button", text: "＋ Agregar posición", onclick: function () { openPosForm(null); } })];
+    if (pos.length) top.push(el("button", { class: "btn", type: "button", text: "Avisos con la app cerrada", onclick: openPosSync }));
+    list.appendChild(el("div", { class: "row", style: "margin-top:0" }, top));
+    if (!pos.length) {
+      list.appendChild(el("p", { class: "empty", text: "Aún no cargaste ninguna posición. Cuando compres, agrégala aquí (activo, cantidad, precio y stop) y la app te dirá si conviene mantener, vender, tomar ganancia o sumar." }));
+      return;
+    }
+    pos.forEach(function (ps) {
+      var r = evalPos(ps);
+      var pnlPct = r ? r.ev.pl : null;
+      var card = el("button", { class: "card", type: "button", "aria-label": ps.ticker + " posición" }, [
+        el("div", {}, [el("span", { class: "tk", text: ps.ticker }), el("span", { class: "nm", text: qtyTxt(ps.cantidad) + " u." })]),
+        el("div", { class: "px", text: r ? "$" + fmt(r.price) : "sin datos" }),
+        el("div", { class: "meta" }, r ? [accionPill(r.ev.accion), el("span", { class: "tag", text: "compra $" + fmt(ps.compra) }), r.live ? el("span", { class: "tag live", text: "● en vivo" }) : el("span", { class: "tag", text: "último cierre" })] : [el("span", { class: "tag stale", text: "activo fuera de la lista" })]),
+        el("div", {}, [el("div", { class: "ch " + (pnlPct >= 0 ? "up" : "down"), text: r ? signed(pnlPct) + "%" : "—" })])
+      ]);
+      card.addEventListener("click", function () { openPosition(ps); });
+      list.appendChild(card);
+    });
+    list.appendChild(el("p", { class: "foot", style: "padding:8px 0", text: "Las acciones usan el último cierre diario: el stop no se vigila durante el día. Pon también una alerta de precio en Lemon." }));
+  }
+
+  function openPosition(ps) {
+    var c = document.getElementById("sheet-content");
+    c.textContent = "";
+    var r = evalPos(ps);
+    c.appendChild(el("h2", { id: "sheet-title", text: ps.ticker + " · tu posición" }));
+    if (!r) {
+      c.appendChild(el("div", { class: "warnbox", text: "Este activo no está en la lista de la app, así que no hay datos para evaluarlo." }));
+    } else {
+      var ev = r.ev, a = r.a;
+      c.appendChild(el("p", { class: "note", text: (r.live ? "Precio en vivo" : "Último cierre") + ": $" + fmt(r.price) + (a.obsoleto ? " · dato viejo, no se pudo actualizar" : "") }));
+      c.appendChild(el("div", { class: "row" }, [accionPill(ev.accion)]));
+      c.appendChild(el("p", { text: ev.motivo }));
+      if (!a.validada) c.appendChild(el("div", { class: "warnbox", text: "La estrategia de señales no está validada en este activo. Esta guía se basa en tus niveles y en la tendencia diaria, no en una señal probada." }));
+      var riesgoAbierto = ps.cantidad * Math.max(r.price - ev.stop, 0);
+      c.appendChild(el("h3", { text: "Tu posición" }));
+      c.appendChild(kv([
+        ["Cantidad", qtyTxt(ps.cantidad)], ["Precio de compra", "$" + fmt(ps.compra)],
+        ["Resultado", signed(ev.pl) + "% (" + money(ps.cantidad * (r.price - ps.compra)) + ")"],
+        ["Valor actual", "$" + fmt(ps.cantidad * r.price, 2)],
+        ["Stop", "$" + fmt(ev.stop)], ["Objetivo 1", "$" + fmt(ev.obj1)], ["Objetivo 2", "$" + fmt(ev.obj2)],
+        ["Riesgo abierto hasta el stop", "$" + fmt(riesgoAbierto, 2) + " (" + fmt(riesgoAbierto / state.settings.capital * 100, 1) + "% de tu capital)"]
+      ]));
+      c.appendChild(el("h3", { text: "Qué hacer ahora" }));
+      c.appendChild(el("div", { class: "step" }, [el("ul", { style: "margin-left:18px" }, Posiciones.pasos(ev.accion, ps.ticker).map(function (t) { return el("li", { text: t }); }))]));
+    }
+    c.appendChild(el("div", { class: "row" }, [
+      el("button", { class: "btn", type: "button", text: "Editar", onclick: function () { openPosForm(ps); } }),
+      el("button", { class: "btn", type: "button", text: "Eliminar", onclick: function () {
+        if (!confirm("¿Eliminar tu posición de " + ps.ticker + " de la app?")) return;
+        savePos(loadPos().filter(function (x) { return x.id !== ps.id; })); closeSheet(); renderList();
+      } })
+    ]));
+    c.appendChild(el("p", { class: "note", text: "Solo contempla compras (long). Información, no asesoría financiera personalizada. Las órdenes las colocas tú." }));
+    document.getElementById("sheet").hidden = false;
+    document.querySelector(".sheet-close").focus();
+  }
+
+  function openPosForm(ps) {
+    var c = document.getElementById("sheet-content");
+    c.textContent = "";
+    c.appendChild(el("h2", { id: "sheet-title", text: ps ? "Editar posición" : "Agregar posición" }));
+    var activos = state.data ? state.data.activos : [];
+    var tk = el("select", { id: "p-tk" }, activos.map(function (a) { return el("option", { value: a.ticker, text: a.ticker + " · " + a.nombre }); }));
+    var qty = el("input", { id: "p-qty", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "Ej: 1,5" });
+    var buy = el("input", { id: "p-buy", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "USD por unidad" });
+    var stp = el("input", { id: "p-stop", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "USD (vacío = 2×ATR)" });
+    var o1 = el("input", { id: "p-o1", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "vacío = automático (2R)" });
+    var o2 = el("input", { id: "p-o2", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "vacío = automático (3R)" });
+    if (ps) { tk.value = ps.ticker; qty.value = ps.cantidad; buy.value = ps.compra; if (ps.stop) stp.value = ps.stop; if (ps.obj1) o1.value = ps.obj1; if (ps.obj2) o2.value = ps.obj2; }
+    var err = el("div", { class: "warnbox", hidden: "hidden" });
+    function atrNow() { var a = assetOf(tk.value); return a && a.indicadores ? a.indicadores.atr14 : null; }
+    c.appendChild(el("div", { class: "form" }, [
+      el("label", {}, ["Activo", tk]), el("label", {}, ["Cantidad", qty]),
+      el("label", {}, ["Precio de compra (USD)", buy]), el("label", {}, ["Stop (USD)", stp]),
+      el("label", {}, ["Objetivo 1 (USD)", o1]), el("label", {}, ["Objetivo 2 (USD)", o2])
+    ]));
+    c.appendChild(el("div", { class: "row" }, [
+      el("button", { class: "btn", type: "button", text: "Stop corto −5%", onclick: function () { var b = parseFloat(buy.value); if (b > 0) stp.value = (b * 0.95).toFixed(2); } }),
+      el("button", { class: "btn", type: "button", text: "Stop amplio 2×ATR", onclick: function () { var b = parseFloat(buy.value), at = atrNow(); if (b > 0 && at) stp.value = (b - 2 * at).toFixed(2); } })
+    ]));
+    c.appendChild(el("p", { class: "note", text: "Usa el precio en dólares de la acción o cripto. Si compraste un CEDEAR o pagaste en pesos, usa el precio del activo original en USD, no el precio en pesos. Los objetivos vacíos se calculan solos a 2R y 3R del stop." }));
+    c.appendChild(err);
+    c.appendChild(el("div", { class: "row" }, [
+      el("button", { class: "btn primary", type: "button", text: "Guardar", onclick: function () {
+        var q = parseFloat(qty.value), b = parseFloat(buy.value), s = parseFloat(stp.value), x1 = parseFloat(o1.value), x2 = parseFloat(o2.value);
+        var msg = "";
+        if (!(q > 0)) msg = "La cantidad debe ser mayor que 0.";
+        else if (!(b > 0)) msg = "Pon el precio de compra en USD.";
+        else if (stp.value && !(s > 0 && s < b)) msg = "El stop debe ser menor que el precio de compra.";
+        else if (o1.value && !(x1 > b)) msg = "El objetivo 1 debe ser mayor que el precio de compra.";
+        else if (o2.value && !(x2 > (x1 > 0 ? x1 : b))) msg = "El objetivo 2 debe ser mayor que el objetivo 1.";
+        if (msg) { err.textContent = msg; err.hidden = false; return; }
+        var item = { id: ps ? ps.id : String(Date.now()), ticker: tk.value, cantidad: q, compra: b, stop: s > 0 ? s : null, obj1: x1 > 0 ? x1 : null, obj2: x2 > 0 ? x2 : null };
+        var list = loadPos().filter(function (x) { return !ps || x.id !== ps.id; });
+        list.push(item); savePos(list);
+        state.filter = "posiciones";
+        document.querySelectorAll(".tabs button").forEach(function (x) { x.setAttribute("aria-selected", x.dataset.filter === "posiciones" ? "true" : "false"); });
+        renderList(); openPosition(item);
+      } }),
+      el("button", { class: "btn", type: "button", text: "Cancelar", onclick: closeSheet })
+    ]));
+    document.getElementById("sheet").hidden = false;
+    document.querySelector(".sheet-close").focus();
+  }
+
+  function openPosSync() {
+    var c = document.getElementById("sheet-content");
+    c.textContent = "";
+    c.appendChild(el("h2", { id: "sheet-title", text: "Avisos con la app cerrada" }));
+    c.appendChild(el("p", { text: "Para que te avisen aunque la app esté cerrada, el servidor necesita conocer tus posiciones. Se guardan en un secreto PRIVADO de GitHub, no en el código público." }));
+    var payload = JSON.stringify({ capital: state.settings.capital, riesgo: state.settings.riesgo, posiciones: loadPos().map(function (p) { return { ticker: p.ticker, cantidad: p.cantidad, compra: p.compra, stop: p.stop, obj1: p.obj1, obj2: p.obj2 }; }) });
+    var box = el("textarea", { readonly: "readonly", rows: "6", style: "width:100%;font:12px monospace;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px" });
+    box.value = payload;
+    var msg = el("p", { class: "note", text: "" });
+    c.appendChild(el("h3", { text: "Pasos" }));
+    c.appendChild(el("div", { class: "step" }, [el("ul", { style: "margin-left:18px" }, [
+      "Toca Copiar.", "En GitHub: tu repositorio → Settings → Secrets and variables → Actions.",
+      "Crea (o edita) el secreto con nombre POSICIONES y pega el texto como valor.",
+      "Repite esto cada vez que agregues, cambies o elimines una posición."
+    ].map(function (t) { return el("li", { text: t }); }))]));
+    c.appendChild(box);
+    c.appendChild(el("div", { class: "row" }, [el("button", { class: "btn primary", type: "button", text: "Copiar", onclick: function () {
+      box.select();
+      if (navigator.clipboard) navigator.clipboard.writeText(payload).then(function () { msg.textContent = "Copiado."; }, function () { msg.textContent = "Mantén pulsado el texto para copiarlo."; });
+    } })]));
+    c.appendChild(msg);
+    c.appendChild(el("p", { class: "note", text: "Los avisos se evalúan en cada actualización (cada 4 h) con el último cierre. Solo llegan cuando la recomendación cambia, por ejemplo de MANTENER a VENDER." }));
+    document.getElementById("sheet").hidden = false;
+  }
+
   function openGuide(a) {
     var g = Guia.buildGuide(a, { capital: state.settings.capital, riesgo: state.settings.riesgo, fmt: fmt, livePrice: (liveFor(a) || {}).p });
     var c = document.getElementById("sheet-content");
@@ -246,9 +401,13 @@
     document.querySelector(".sheet-close").focus();
   }
   var pendingOp = null;
-  function openOp(ticker) {
-    if (!state.data) { pendingOp = ticker; return; }
-    var a = state.data.activos.filter(function (x) { return x.ticker === ticker; })[0];
+  function openOp(ticker, vista) {
+    if (!state.data) { pendingOp = { t: ticker, v: vista }; return; }
+    if (vista === "pos") {
+      var ps = loadPos().filter(function (x) { return x.ticker === ticker; })[0];
+      if (ps) { openPosition(ps); return; }
+    }
+    var a = assetOf(ticker);
     if (a) { if (a.ultimo_evento) openGuide(a); else openSheet(a); }
   }
   var VAPID_PUBLIC = "BHyoM5CzaKbAh1mDO6dQu75LpiFWyZwP1KjkEJ9EBxX94prltZw7L6IdOhqS4HLRM_7SxVwk7_j9Y_snz9IC2Ig";
@@ -357,7 +516,7 @@
       if (!DEMO) checkNew(d);
       renderList();
       fetchLive();
-      if (pendingOp) { var t = pendingOp; pendingOp = null; openOp(t); }
+      if (pendingOp) { var po = pendingOp; pendingOp = null; openOp(po.t, po.v); }
     }).catch(function () {
       st.textContent = "Sin conexión o sin datos. Mostrando lo último guardado si existe.";
       st.className = "status stale";
@@ -380,8 +539,9 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
     document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
     var op = new URLSearchParams(location.search).get("op");
-    if (op) { pendingOp = op.toUpperCase(); try { history.replaceState(null, "", location.pathname); } catch (e) {} }
-    if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function (e) { if (e.data && e.data.op) { load(); openOp(String(e.data.op).toUpperCase()); } });
+    var opv = new URLSearchParams(location.search).get("v");
+    if (op) { pendingOp = { t: op.toUpperCase(), v: opv }; try { history.replaceState(null, "", location.pathname); } catch (e) {} }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function (e) { if (e.data && e.data.op) { load(); openOp(String(e.data.op).toUpperCase(), e.data.v || null); } });
     load();
     setInterval(load, 5 * 60 * 1000);
     setInterval(fetchLive, 15 * 1000);

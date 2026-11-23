@@ -10,7 +10,7 @@ Uso:
   python3 scripts/update_signals.py --csv-dir DIR    # prueba offline (DIR/TICKER.csv)
   python3 scripts/update_signals.py --no-notify      # sin avisos push
 
-Solo librería estándar. Avisos push a la propia app (opcional): PUSH_SUBSCRIPTION y VAPID_PRIVATE_KEY.
+Solo librería estándar. Avisos push a la propia app (opcional): PUSH_SUBSCRIPTION y VAPID_PRIVATE_KEY; posiciones: POSICIONES.
 No ejecuta operaciones: solo informa.
 """
 import argparse
@@ -367,6 +367,36 @@ def notify(asset, sender=None):
         return False
 
 
+def make_sender():
+    """Devuelve una función msg -> envío push, o None si faltan los secretos."""
+    sub_raw = os.environ.get("PUSH_SUBSCRIPTION", "").strip()
+    priv = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+    if not sub_raw or not priv:
+        return None
+    try:
+        sub = json.loads(sub_raw)
+        import webpush  # noqa: PLC0415
+    except Exception as exc:  # noqa: BLE001
+        print(f"  push no disponible: {type(exc).__name__}", file=sys.stderr)
+        return None
+    return lambda msg: webpush.send(sub, msg, priv, SUBJECT)
+
+
+def notify_posiciones(previous, results):
+    """Avisos sobre TUS posiciones (secreto POSICIONES, nunca se escribe en el repo)."""
+    import posiciones  # noqa: PLC0415
+    cfg, lista = posiciones.cargar(os.environ.get("POSICIONES", ""))
+    if not lista:
+        return 0
+    sender = make_sender()
+    if sender is None:
+        print("  hay posiciones pero faltan PUSH_SUBSCRIPTION/VAPID_PRIVATE_KEY: sin avisos.", file=sys.stderr)
+        return 0
+    n = posiciones.notificar(previous, results, cfg, lista, sender)
+    print(f"  avisos de posiciones enviados: {n}")
+    return n
+
+
 def send_test(sender=None):
     """Aviso de prueba por el mismo camino que las señales reales. Devuelve 0 si se envió."""
     sub_raw = os.environ.get("PUSH_SUBSCRIPTION", "").strip()
@@ -434,6 +464,7 @@ def main():
         return 1
 
     if not args.no_notify:
+        notify_posiciones(previous, results)
         for a in results:
             ev = a.get("ultimo_evento")
             if a.get("nuevo") and not a.get("obsoleto") and ev:
