@@ -244,6 +244,7 @@
   function renderPositions(list) {
     var pos = loadPos();
     var top = [el("button", { class: "btn primary", type: "button", text: "＋ Agregar posición", onclick: function () { openPosForm(null); } })];
+    top.push(el("button", { class: "btn", type: "button", text: "Pasar a otro dispositivo", onclick: openBackup }));
     if (pos.length) top.push(el("button", { class: "btn", type: "button", text: "Avisos con la app cerrada", onclick: openPosSync }));
     list.appendChild(el("div", { class: "row", style: "margin-top:0" }, top));
     if (!pos.length) {
@@ -281,7 +282,7 @@
       var riesgoAbierto = ps.cantidad * Math.max(r.price - ev.stop, 0);
       c.appendChild(el("h3", { text: "Tu posición" }));
       c.appendChild(kv([
-        ["Cantidad", qtyTxt(ps.cantidad)], ["Precio de compra", "$" + fmt(ps.compra)],
+        ["Cantidad", qtyTxt(ps.cantidad)], ["Precio de compra (por acción)", "$" + fmt(ps.compra)],
         ["Resultado", signed(ev.pl) + "% (" + money(ps.cantidad * (r.price - ps.compra)) + ")"],
         ["Valor actual", "$" + fmt(ps.cantidad * r.price, 2)],
         ["Stop", "$" + fmt(ev.stop)], ["Objetivo 1", "$" + fmt(ev.obj1)], ["Objetivo 2", "$" + fmt(ev.obj2)],
@@ -308,8 +309,8 @@
     c.appendChild(el("h2", { id: "sheet-title", text: ps ? "Editar posición" : "Agregar posición" }));
     var activos = state.data ? state.data.activos : [];
     var tk = el("select", { id: "p-tk" }, activos.map(function (a) { return el("option", { value: a.ticker, text: a.ticker + " · " + a.nombre }); }));
-    var qty = el("input", { id: "p-qty", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "Ej: 1,5" });
-    var buy = el("input", { id: "p-buy", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "USD por unidad" });
+    var qty = el("input", { id: "p-qty", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "Ej: 0,167" });
+    var buy = el("input", { id: "p-buy", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "Ej: 165,19 (lo que valía 1 acción)" });
     var stp = el("input", { id: "p-stop", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "USD (vacío = 2×ATR)" });
     var o1 = el("input", { id: "p-o1", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "vacío = automático (2R)" });
     var o2 = el("input", { id: "p-o2", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "vacío = automático (3R)" });
@@ -317,15 +318,35 @@
     var err = el("div", { class: "warnbox", hidden: "hidden" });
     function atrNow() { var a = assetOf(tk.value); return a && a.indicadores ? a.indicadores.atr14 : null; }
     c.appendChild(el("div", { class: "form" }, [
-      el("label", {}, ["Activo", tk]), el("label", {}, ["Cantidad", qty]),
-      el("label", {}, ["Precio de compra (USD)", buy]), el("label", {}, ["Stop (USD)", stp]),
+      el("label", {}, ["Activo", tk]), el("label", {}, ["Cantidad de acciones (puede ser decimal)", qty]),
+      el("label", {}, ["Precio de 1 acción cuando compraste (USD)", buy]), el("label", {}, ["Stop (USD)", stp]),
       el("label", {}, ["Objetivo 1 (USD)", o1]), el("label", {}, ["Objetivo 2 (USD)", o2])
     ]));
     c.appendChild(el("div", { class: "row" }, [
       el("button", { class: "btn", type: "button", text: "Stop corto −5%", onclick: function () { var b = parseFloat(buy.value); if (b > 0) stp.value = (b * 0.95).toFixed(2); } }),
       el("button", { class: "btn", type: "button", text: "Stop amplio 2×ATR", onclick: function () { var b = parseFloat(buy.value), at = atrNow(); if (b > 0 && at) stp.value = (b - 2 * at).toFixed(2); } })
     ]));
-    c.appendChild(el("p", { class: "note", text: "Usa el precio en dólares de la acción o cripto. Si compraste un CEDEAR o pagaste en pesos, usa el precio del activo original en USD, no el precio en pesos. Los objetivos vacíos se calculan solos a 2R y 3R del stop." }));
+    c.appendChild(el("p", { class: "note", text: "Cantidad = cuántas acciones tienes. Precio = lo que valía UNA acción cuando compraste (no el total invertido). Los objetivos vacíos se calculan solos a 2R y 3R del stop." }));
+    // calculadora para quien paga en pesos (Lemon)
+    var ars = el("input", { id: "p-ars", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "Pesos que pagaste" });
+    var fx = el("input", { id: "p-fx", type: "number", min: "0", step: "any", inputmode: "decimal", placeholder: "Pesos por 1 USD" });
+    var calcMsg = el("p", { class: "note", text: "" });
+    c.appendChild(el("h3", { text: "¿Pagaste en pesos? Calcula aquí" }));
+    c.appendChild(el("div", { class: "form" }, [el("label", {}, ["Monto pagado (ARS)", ars]), el("label", {}, ["Dólar que te aplicaron (ARS/USD)", fx])]));
+    c.appendChild(el("div", { class: "row" }, [el("button", { class: "btn", type: "button", text: "Calcular cantidad o precio", onclick: function () {
+      var m = parseFloat(ars.value), d = parseFloat(fx.value);
+      if (!(m > 0 && d > 0)) { calcMsg.textContent = "Completa los pesos pagados y el dólar que te aplicaron."; return; }
+      var usd = m / d, q = parseFloat(qty.value), b = parseFloat(buy.value), txt = "Equivale a US$" + fmt(usd, 2) + ". ";
+      if (b > 0 && !(q > 0)) { qty.value = (usd / b).toFixed(6); txt += "Cantidad calculada con tu precio de compra."; }
+      else if (q > 0 && !(b > 0)) { buy.value = (usd / q).toFixed(2); txt += "Precio de compra calculado con tu cantidad."; }
+      else if (!(q > 0) && !(b > 0)) {
+        var a0 = assetOf(tk.value);
+        if (a0) { buy.value = a0.precio.toFixed(2); qty.value = (usd / a0.precio).toFixed(6); txt += "Usé el último cierre ($" + fmt(a0.precio) + ") como precio de compra: corrígelo si pagaste otro."; }
+      } else { txt += "Ya tienes cantidad y precio: comprueba que cantidad × precio sea cercano a ese monto (ahora: US$" + fmt(q * b, 2) + ")."; }
+      calcMsg.textContent = txt;
+    } })]));
+    c.appendChild(calcMsg);
+    c.appendChild(el("p", { class: "note", text: "Tu resultado en pesos también depende del dólar: la app mide la acción en dólares. Si el dólar sube, ganarás en pesos más de lo que ves aquí." }));
     c.appendChild(err);
     c.appendChild(el("div", { class: "row" }, [
       el("button", { class: "btn primary", type: "button", text: "Guardar", onclick: function () {
@@ -348,6 +369,81 @@
     ]));
     document.getElementById("sheet").hidden = false;
     document.querySelector(".sheet-close").focus();
+  }
+
+  // ───── respaldo: pasar posiciones entre dispositivos con un código ─────
+  var BK_PREFIX = "SENALES1:";
+  function exportCode() {
+    var data = { capital: state.settings.capital, riesgo: state.settings.riesgo, posiciones: loadPos() };
+    return BK_PREFIX + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  }
+  function parseCode(text) {
+    var t = String(text || "").replace(/\s+/g, "");
+    if (t.indexOf(BK_PREFIX) !== 0) throw new Error("El código debe empezar con " + BK_PREFIX);
+    var d;
+    try { d = JSON.parse(decodeURIComponent(escape(atob(t.slice(BK_PREFIX.length))))); } catch (e) { throw new Error("El código está incompleto o cambiado. Cópialo de nuevo."); }
+    if (!d || !Array.isArray(d.posiciones)) throw new Error("El código no contiene posiciones.");
+    var lista = [];
+    d.posiciones.forEach(function (x) {
+      var q = Number(x.cantidad), b = Number(x.compra);
+      if (typeof x.ticker !== "string" || !/^[A-Z0-9.\-]{1,12}$/.test(x.ticker) || !(q > 0) || !(b > 0)) return;
+      var s = Number(x.stop), o1 = Number(x.obj1), o2 = Number(x.obj2);
+      lista.push({ id: String(x.id || Date.now() + lista.length), ticker: x.ticker, cantidad: q, compra: b, stop: s > 0 ? s : null, obj1: o1 > 0 ? o1 : null, obj2: o2 > 0 ? o2 : null });
+    });
+    var cap = Number(d.capital), rk = Number(d.riesgo);
+    return { lista: lista, capital: cap > 0 ? cap : null, riesgo: rk > 0 ? rk : null };
+  }
+  function applyImport(res, modo) {
+    var actual = loadPos(), final;
+    if (modo === "reemplazar") {
+      final = res.lista;
+      if (res.capital) state.settings.capital = res.capital;
+      if (res.riesgo) state.settings.riesgo = res.riesgo;
+      store("ajustes", JSON.stringify(state.settings));
+    } else {
+      var ids = {}; res.lista.forEach(function (x) { ids[x.id] = x; });
+      final = actual.map(function (x) { return ids[x.id] || x; });
+      res.lista.forEach(function (x) { if (!actual.some(function (y) { return y.id === x.id; })) final.push(x); });
+    }
+    savePos(final);
+    return final.length;
+  }
+  function openBackup() {
+    var c = document.getElementById("sheet-content");
+    c.textContent = "";
+    c.appendChild(el("h2", { id: "sheet-title", text: "Pasar a otro dispositivo" }));
+    c.appendChild(el("p", { text: "Tus posiciones viven solo en este navegador. Para verlas en otro (por ejemplo del teléfono a la PC), usa un código." }));
+    c.appendChild(el("h3", { text: "1 · En el dispositivo que ya las tiene" }));
+    var out = el("textarea", { readonly: "readonly", rows: "4", style: "width:100%;font:12px monospace;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px" });
+    out.value = exportCode();
+    var m1 = el("p", { class: "note", text: "" });
+    c.appendChild(out);
+    c.appendChild(el("div", { class: "row" }, [el("button", { class: "btn primary", type: "button", text: "Copiar código", onclick: function () {
+      out.select();
+      if (navigator.clipboard) navigator.clipboard.writeText(out.value).then(function () { m1.textContent = "Copiado. Envíatelo a ti mismo (por ejemplo, un mensaje a ti en WhatsApp)."; }, function () { m1.textContent = "Mantén pulsado el texto para copiarlo."; });
+    } })]));
+    c.appendChild(m1);
+    c.appendChild(el("h3", { text: "2 · En el dispositivo nuevo" }));
+    var inp = el("textarea", { rows: "4", placeholder: "Pega aquí el código (empieza con " + BK_PREFIX + ")", style: "width:100%;font:12px monospace;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px" });
+    var m2 = el("div", { class: "note", text: "" });
+    function run(modo) {
+      try {
+        var res = parseCode(inp.value);
+        if (!res.lista.length && modo === "reemplazar" && !confirm("El código no trae posiciones válidas. ¿Reemplazar igual y dejar la lista vacía?")) return;
+        if (modo === "reemplazar" && loadPos().length && !confirm("Esto reemplaza las posiciones de este dispositivo. ¿Continuar?")) return;
+        var n = applyImport(res, modo);
+        m2.textContent = "Listo: ahora hay " + n + " posición(es) en este dispositivo.";
+        renderList();
+      } catch (e) { m2.textContent = e.message; }
+    }
+    c.appendChild(inp);
+    c.appendChild(el("div", { class: "row" }, [
+      el("button", { class: "btn primary", type: "button", text: "Reemplazar todo", onclick: function () { run("reemplazar"); } }),
+      el("button", { class: "btn", type: "button", text: "Agregar sin borrar", onclick: function () { run("agregar"); } })
+    ]));
+    c.appendChild(m2);
+    c.appendChild(el("p", { class: "note", text: "El código contiene tus posiciones: no lo publiques. «Reemplazar todo» también copia tu capital y % de riesgo. Cada vez que cambies algo, vuelve a pasar el código." }));
+    document.getElementById("sheet").hidden = false;
   }
 
   function openPosSync() {
