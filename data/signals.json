@@ -1,5 +1,5 @@
 {
- "generado": "2026-11-27T17:08:49+00:00",
+ "generado": "2026-11-27T20:57:07+00:00",
  "errores": [],
  "aviso": "Información, no asesoría financiera personalizada. La app no ejecuta operaciones.",
  "activos": [
@@ -9,9 +9,9 @@
    "tipo": "cripto",
    "validada": true,
    "marco": "4h",
-   "vela_cierre_t": 1795780800,
-   "precio": 60116.98,
-   "cambio_pct": -2.51,
+   "vela_cierre_t": 1795795200,
+   "precio": 59910.33,
+   "cambio_pct": -0.34,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
@@ -25,22 +25,21 @@
     "precio": 58738.33
    },
    "indicadores": {
-    "ema50": 61349.98829,
-    "ema200": 68806.370451,
-    "rsi14": 46.03,
-    "atr14": 1210.449,
-    "macd": 105.538094,
-    "macd_senal": -45.39372,
+    "ema50": 61293.531102,
+    "ema200": 68717.848887,
+    "rsi14": 44.58,
+    "atr14": 1198.7255,
+    "macd": 33.466977,
+    "macd_senal": -29.621581,
     "canal_sup": 62248.91,
     "canal_inf": 57300.38,
-    "stop_atr_dist": 4841.795999
+    "stop_atr_dist": 4794.901999
    },
    "gatillos": {
     "long": "Cierre sobre 62248.9 y sobre la EMA 200",
     "short": "Cierre bajo 57300.4 y bajo la EMA 200"
    },
    "serie": [
-    63753.75,
     64947.35,
     64457.96,
     64884.01,
@@ -99,7 +98,8 @@
     61411.0,
     61673.45,
     61662.57,
-    60116.98
+    60116.98,
+    59910.33
    ],
    "obsoleto": false
   },
@@ -109,9 +109,9 @@
    "tipo": "cripto",
    "validada": true,
    "marco": "4h",
-   "vela_cierre_t": 1795780800,
-   "precio": 1672.46,
-   "cambio_pct": -2.99,
+   "vela_cierre_t": 1795795200,
+   "precio": 1671.26,
+   "cambio_pct": -0.07,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
@@ -125,22 +125,21 @@
     "precio": 1640.95
    },
    "indicadores": {
-    "ema50": 1722.102389,
-    "ema200": 1975.274467,
-    "rsi14": 44.17,
-    "atr14": 40.395312,
-    "macd": 1.054648,
-    "macd_senal": -2.624776,
+    "ema50": 1720.10857,
+    "ema200": 1972.249353,
+    "rsi14": 43.94,
+    "atr14": 39.712075,
+    "macd": -1.306208,
+    "macd_senal": -2.361063,
     "canal_sup": 1755.22,
     "canal_inf": 1608.86,
-    "stop_atr_dist": 161.581247
+    "stop_atr_dist": 158.848301
    },
    "gatillos": {
     "long": "Cierre sobre 1755.22 y sobre la EMA 200",
     "short": "Cierre bajo 1608.86 y bajo la EMA 200"
    },
    "serie": [
-    1791.14,
     1824.88,
     1805.16,
     1817.24,
@@ -199,7 +198,8 @@
     1728.64,
     1735.44,
     1724.04,
-    1672.46
+    1672.46,
+    1671.26
    ],
    "obsoleto": false
   },
@@ -209,9 +209,9 @@
    "tipo": "cripto",
    "validada": false,
    "marco": "4h",
-   "vela_cierre_t": 1795780800,
-   "precio": 72.15,
-   "cambio_pct": -1.38,
+   "vela_cierre_t": 1795795200,
+   "precio": 72.04,
+   "cambio_pct": -0.15,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
@@ -225,22 +225,21 @@
     "precio": 67.81
    },
    "indicadores": {
-    "ema50": 71.678028,
-    "ema200": 82.120611,
-    "rsi14": 55.48,
-    "atr14": 1.738314,
-    "macd": 0.47283,
-    "macd_senal": 0.112958,
+    "ema50": 71.692223,
+    "ema200": 82.020318,
+    "rsi14": 54.81,
+    "atr14": 1.708435,
+    "macd": 0.46984,
+    "macd_senal": 0.184334,
     "canal_sup": 73.93,
     "canal_inf": 65.84,
-    "stop_atr_dist": 6.953257
+    "stop_atr_dist": 6.833739
    },
    "gatillos": {
     "long": "Cierre sobre 73.93 y sobre la EMA 200",
     "short": "Cierre bajo 65.84 y bajo la EMA 200"
    },
    "serie": [
-    72.83,
     75.19,
     74.8,
     75.19,
@@ -299,7 +298,8 @@
     72.75,
     73.29,
     73.16,
-    72.15
+    72.15,
+    72.04
    ],
    "obsoleto": false
   },
@@ -309,9 +309,9 @@
    "tipo": "cripto",
    "validada": false,
    "marco": "4h",
-   "vela_cierre_t": 1795780800,
-   "precio": 554.11,
-   "cambio_pct": -1.76,
+   "vela_cierre_t": 1795795200,
+   "precio": 554.04,
+   "cambio_pct": -0.01,
    "sesgo": "bajista",
    "estado": "esperar",
    "nuevo": false,
@@ -325,22 +325,21 @@
     "precio": 567.120489
    },
    "indicadores": {
-    "ema50": 561.674293,
-    "ema200": 628.643266,
-    "rsi14": 49.24,
-    "atr14": 10.07063,
-    "macd": 1.301567,
-    "macd_senal": -0.30006,
+    "ema50": 561.374909,
+    "ema200": 627.900911,
+    "rsi14": 49.18,
+    "atr14": 9.967728,
+    "macd": 1.035277,
+    "macd_senal": -0.032993,
     "canal_sup": 568.3,
     "canal_inf": 526.72,
-    "stop_atr_dist": 40.282521
+    "stop_atr_dist": 39.870912
    },
    "gatillos": {
     "long": "Cierre sobre 568.3 y sobre la EMA 200",
     "short": "Cierre bajo 526.72 y bajo la EMA 200"
    },
    "serie": [
-    587.91,
     597.47,
     591.81,
     593.73,
@@ -399,7 +398,8 @@
     562.59,
     565.09,
     564.06,
-    554.11
+    554.11,
+    554.04
    ],
    "obsoleto": false
   },
@@ -409,9 +409,9 @@
    "tipo": "cripto",
    "validada": false,
    "marco": "4h",
-   "vela_cierre_t": 1795780800,
-   "precio": 0.9525,
-   "cambio_pct": -2.42,
+   "vela_cierre_t": 1795795200,
+   "precio": 0.9511,
+   "cambio_pct": -0.15,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
@@ -425,22 +425,21 @@
     "precio": 0.909
    },
    "indicadores": {
-    "ema50": 0.949637,
-    "ema200": 1.07395,
-    "rsi14": 52.31,
-    "atr14": 0.023051,
-    "macd": 0.007775,
-    "macd_senal": 0.004353,
+    "ema50": 0.949694,
+    "ema200": 1.072728,
+    "rsi14": 51.82,
+    "atr14": 0.022397,
+    "macd": 0.006993,
+    "macd_senal": 0.004881,
     "canal_sup": 0.9874,
     "canal_inf": 0.8889,
-    "stop_atr_dist": 0.092205
+    "stop_atr_dist": 0.08959
    },
    "gatillos": {
     "long": "Cierre sobre 0.9874 y sobre la EMA 200",
     "short": "Cierre bajo 0.8889 y bajo la EMA 200"
    },
    "serie": [
-    0.9656,
     0.9837,
     0.9772,
     1.0021,
@@ -499,7 +498,8 @@
     0.9616,
     0.9786,
     0.9761,
-    0.9525
+    0.9525,
+    0.9511
    ],
    "obsoleto": false
   },
@@ -526,7 +526,7 @@
    },
    "indicadores": {
     "ema50": 191.403117,
-    "ema200": 199.076128,
+    "ema200": 199.068533,
     "rsi14": 37.45,
     "atr14": 13.383035,
     "macd": -16.918899,
@@ -626,7 +626,7 @@
    },
    "indicadores": {
     "ema50": 342.101536,
-    "ema200": 310.932149,
+    "ema200": 310.924744,
     "rsi14": 57.9,
     "atr14": 8.563608,
     "macd": 2.957891,
@@ -726,7 +726,7 @@
    },
    "indicadores": {
     "ema50": 511.251947,
-    "ema200": 472.016753,
+    "ema200": 472.007739,
     "rsi14": 38.75,
     "atr14": 16.880023,
     "macd": -8.600809,
@@ -826,7 +826,7 @@
    },
    "indicadores": {
     "ema50": 376.519797,
-    "ema200": 379.439216,
+    "ema200": 379.417841,
     "rsi14": 50.31,
     "atr14": 19.579605,
     "macd": -0.232005,
@@ -926,7 +926,7 @@
    },
    "indicadores": {
     "ema50": 749.963348,
-    "ema200": 733.30971,
+    "ema200": 733.293413,
     "rsi14": 39.83,
     "atr14": 15.575205,
     "macd": -12.975946,
@@ -1026,7 +1026,7 @@
    },
    "indicadores": {
     "ema50": 690.38381,
-    "ema200": 681.006896,
+    "ema200": 680.993323,
     "rsi14": 38.58,
     "atr14": 21.539351,
     "macd": -20.160339,
