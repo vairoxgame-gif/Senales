@@ -1,5 +1,5 @@
 {
- "generado": "2026-11-28T12:58:23+00:00",
+ "generado": "2026-11-28T16:50:27+00:00",
  "errores": [],
  "aviso": "Información, no asesoría financiera personalizada. La app no ejecuta operaciones.",
  "activos": [
@@ -9,9 +9,9 @@
    "tipo": "cripto",
    "validada": true,
    "marco": "4h",
-   "vela_cierre_t": 1795852800,
-   "precio": 59238.3,
-   "cambio_pct": -0.99,
+   "vela_cierre_t": 1795867200,
+   "precio": 59496.72,
+   "cambio_pct": 0.44,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
@@ -25,22 +25,21 @@
     "precio": 58738.33
    },
    "indicadores": {
-    "ema50": 61064.432929,
-    "ema200": 68366.303112,
-    "rsi14": 39.54,
-    "atr14": 1055.386735,
-    "macd": -179.43162,
-    "macd_senal": -73.638129,
+    "ema50": 61002.95399,
+    "ema200": 68278.041182,
+    "rsi14": 42.33,
+    "atr14": 1025.676254,
+    "macd": -219.083778,
+    "macd_senal": -102.727259,
     "canal_sup": 62248.91,
     "canal_inf": 57300.38,
-    "stop_atr_dist": 4221.546939
+    "stop_atr_dist": 4102.705015
    },
    "gatillos": {
     "long": "Cierre sobre 62248.9 y sobre la EMA 200",
     "short": "Cierre bajo 57300.4 y bajo la EMA 200"
    },
    "serie": [
-    63122.53,
     62747.22,
     63068.22,
     63205.64,
@@ -99,7 +98,8 @@
     59923.1,
     60029.2,
     59832.0,
-    59238.3
+    59238.3,
+    59496.72
    ],
    "obsoleto": false
   },
@@ -109,38 +109,37 @@
    "tipo": "cripto",
    "validada": true,
    "marco": "4h",
-   "vela_cierre_t": 1795852800,
-   "precio": 1648.54,
-   "cambio_pct": -0.56,
+   "vela_cierre_t": 1795867200,
+   "precio": 1650.94,
+   "cambio_pct": 0.15,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
    "posicion": "short",
    "entrada": 1640.95,
    "entrada_t": 1795579200,
-   "stop_movil": 1786.449365,
+   "stop_movil": 1784.68441,
    "ultimo_evento": {
     "tipo": "entrada_short",
     "t": 1795579200,
     "precio": 1640.95
    },
    "indicadores": {
-    "ema50": 1710.993481,
-    "ema200": 1959.952663,
-    "rsi14": 39.51,
-    "atr14": 34.477341,
-    "macd": -9.530299,
-    "macd_senal": -5.153633,
+    "ema50": 1708.638443,
+    "ema200": 1956.877729,
+    "rsi14": 40.29,
+    "atr14": 33.436103,
+    "macd": -10.906002,
+    "macd_senal": -6.304107,
     "canal_sup": 1755.22,
     "canal_inf": 1608.86,
-    "stop_atr_dist": 137.909365
+    "stop_atr_dist": 133.74441
    },
    "gatillos": {
     "long": "Cierre sobre 1755.22 y sobre la EMA 200",
     "short": "Cierre bajo 1608.86 y bajo la EMA 200"
    },
    "serie": [
-    1768.59,
     1756.02,
     1777.19,
     1793.88,
@@ -199,7 +198,8 @@
     1662.48,
     1665.99,
     1657.87,
-    1648.54
+    1648.54,
+    1650.94
    ],
    "obsoleto": false
   },
@@ -209,9 +209,9 @@
    "tipo": "cripto",
    "validada": false,
    "marco": "4h",
-   "vela_cierre_t": 1795852800,
-   "precio": 70.95,
-   "cambio_pct": -0.45,
+   "vela_cierre_t": 1795867200,
+   "precio": 70.7,
+   "cambio_pct": -0.35,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
@@ -225,22 +225,21 @@
     "precio": 67.81
    },
    "indicadores": {
-    "ema50": 71.647092,
-    "ema200": 81.603801,
-    "rsi14": 47.87,
-    "atr14": 1.494754,
-    "macd": 0.258545,
-    "macd_senal": 0.276957,
+    "ema50": 71.609951,
+    "ema200": 81.495313,
+    "rsi14": 46.29,
+    "atr14": 1.464415,
+    "macd": 0.173405,
+    "macd_senal": 0.256246,
     "canal_sup": 73.93,
     "canal_inf": 65.84,
-    "stop_atr_dist": 5.979017
+    "stop_atr_dist": 5.857658
    },
    "gatillos": {
     "long": "Cierre sobre 73.93 y sobre la EMA 200",
     "short": "Cierre bajo 65.84 y bajo la EMA 200"
    },
    "serie": [
-    73.49,
     73.12,
     73.64,
     74.24,
@@ -299,7 +298,8 @@
     71.66,
     71.72,
     71.27,
-    70.95
+    70.95,
+    70.7
    ],
    "obsoleto": false
   },
@@ -309,9 +309,9 @@
    "tipo": "cripto",
    "validada": false,
    "marco": "4h",
-   "vela_cierre_t": 1795852800,
-   "precio": 549.54,
-   "cambio_pct": -0.47,
+   "vela_cierre_t": 1795867200,
+   "precio": 552.49,
+   "cambio_pct": 0.54,
    "sesgo": "bajista",
    "estado": "esperar",
    "nuevo": false,
@@ -325,22 +325,21 @@
     "precio": 567.120489
    },
    "indicadores": {
-    "ema50": 560.11364,
-    "ema200": 624.96053,
-    "rsi14": 44.66,
-    "atr14": 8.744559,
-    "macd": -0.030835,
-    "macd_senal": 0.240282,
+    "ema50": 559.814674,
+    "ema200": 624.239367,
+    "rsi14": 48.06,
+    "atr14": 8.48709,
+    "macd": -0.16758,
+    "macd_senal": 0.158709,
     "canal_sup": 568.3,
     "canal_inf": 526.72,
-    "stop_atr_dist": 34.978235
+    "stop_atr_dist": 33.948361
    },
    "gatillos": {
     "long": "Cierre sobre 568.3 y sobre la EMA 200",
     "short": "Cierre bajo 526.72 y bajo la EMA 200"
    },
    "serie": [
-    582.37,
     579.07,
     582.71,
     584.05,
@@ -399,7 +398,8 @@
     554.72,
     555.36,
     552.14,
-    549.54
+    549.54,
+    552.49
    ],
    "obsoleto": false
   },
@@ -409,9 +409,9 @@
    "tipo": "cripto",
    "validada": false,
    "marco": "4h",
-   "vela_cierre_t": 1795852800,
-   "precio": 0.9398,
-   "cambio_pct": -0.56,
+   "vela_cierre_t": 1795867200,
+   "precio": 0.9421,
+   "cambio_pct": 0.24,
    "sesgo": "bajista",
    "estado": "mantener short",
    "nuevo": false,
@@ -425,22 +425,21 @@
     "precio": 0.909
    },
    "indicadores": {
-    "ema50": 0.949124,
-    "ema200": 1.067757,
-    "rsi14": 47.3,
-    "atr14": 0.019364,
-    "macd": 0.003265,
-    "macd_senal": 0.004701,
+    "ema50": 0.948848,
+    "ema200": 1.066507,
+    "rsi14": 48.33,
+    "atr14": 0.018759,
+    "macd": 0.002441,
+    "macd_senal": 0.004249,
     "canal_sup": 0.9874,
     "canal_inf": 0.8889,
-    "stop_atr_dist": 0.077455
+    "stop_atr_dist": 0.075037
    },
    "gatillos": {
     "long": "Cierre sobre 0.9874 y sobre la EMA 200",
     "short": "Cierre bajo 0.8889 y bajo la EMA 200"
    },
    "serie": [
-    0.9767,
     0.967,
     0.9677,
     0.9692,
@@ -499,7 +498,8 @@
     0.9489,
     0.9502,
     0.9451,
-    0.9398
+    0.9398,
+    0.9421
    ],
    "obsoleto": false
   },
